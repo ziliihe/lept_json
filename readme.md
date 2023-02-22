@@ -48,3 +48,8 @@ int lept_parse(lept_value* v, const char* json) {
     return ret;
 }
 ```
+
+对于字符的匹配，这里是按数组索引访问，因为是`null-terminate-string`最后结尾是`\0`不会满足下述判断，短路不会比较后面的，也就不会造成越界访问。
+```c
+if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's' || c->json[3] != 'e')
+```
