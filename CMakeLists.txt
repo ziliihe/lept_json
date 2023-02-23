@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-project(test_leptjson LANGUAGES CXX)
+project(test_leptjson LANGUAGES C CXX)
 
 # gtest configuration
 set(CMAKE_CXX_STANDARD 14)
