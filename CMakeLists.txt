@@ -25,12 +25,19 @@ add_executable(
 target_link_libraries(
   test_leptjson
   GTest::gtest_main
+  leptjson
+)
+
+add_executable(
+  test_addtion
+  test/test_addtion.c
 )
 
 target_link_libraries(
-    test_leptjson
+    test_addtion
     leptjson
 )
+
 
 include(GoogleTest)
 gtest_discover_tests(test_leptjson)

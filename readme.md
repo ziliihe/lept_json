@@ -71,3 +71,7 @@ if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's' || c->json[3] !=
 codepoint = 0x10000 + (H − 0xD800) × 0x400 + (L − 0xDC00)
 ```
 ![utf-8 编码](img/v2-87bc95aabb1678caec0637a17d13593b_b.png)
+
+
+## 04 
+C 语言的数组大小应该使用 size_t 类型。

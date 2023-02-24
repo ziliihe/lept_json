@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <leptjson.h>
+#include <iostream>
 
 TEST(leptjson, tnull) {
     lept_value v;
@@ -179,4 +180,53 @@ TEST(leptjson, string_error) {
     TEST_ERROR(LEPT_PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\\\\\"");
     TEST_ERROR(LEPT_PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\\uDBFF\"");
     TEST_ERROR(LEPT_PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\\uE000\"");
+}
+
+
+TEST(leptjson, array) {
+    size_t a = 30;
+    size_t b = 30;
+    size_t c = 31;
+
+    EXPECT_EQ(a, b);
+    EXPECT_NE(b, c);
+
+    lept_value v;
+    lept_init(&v);
+
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&v, "[ ]"));
+    EXPECT_EQ(LEPT_ARRAY, lept_get_type(&v));
+    EXPECT_EQ(0, lept_get_array_size(&v));
+    lept_free(&v);
+
+    /* [ null , false , true , 123 , "abc" ] */
+    lept_init(&v);
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&v, "[ null , false , true , 123 , \"abc\" ]"));
+    EXPECT_EQ(LEPT_ARRAY, lept_get_type(&v));
+    EXPECT_EQ(5, lept_get_array_size(&v));
+    EXPECT_EQ(LEPT_NULL, lept_get_type(lept_get_array_element(&v, 0)));
+    EXPECT_EQ(LEPT_FALSE, lept_get_type(lept_get_array_element(&v, 1)));
+    EXPECT_EQ(LEPT_TRUE, lept_get_type(lept_get_array_element(&v, 2)));
+    EXPECT_EQ(LEPT_NUMBER, lept_get_type(lept_get_array_element(&v, 3)));
+    EXPECT_EQ(123, lept_get_array_element(&v, 3)->u.n);
+    EXPECT_EQ(LEPT_STRING, lept_get_type(lept_get_array_element(&v, 4)));
+    EXPECT_STREQ("abc", lept_get_array_element(&v, 4)->u.s.s);
+
+
+    /* [ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ] */
+    lept_init(&v);
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&v, "[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
+    EXPECT_EQ(LEPT_ARRAY, lept_get_type(&v));
+    EXPECT_EQ(4, lept_get_array_size(&v));
+    for (int i = 0; i < 4; i++) {
+        lept_value* v2 = lept_get_array_element(&v, i);
+        EXPECT_EQ(LEPT_ARRAY, lept_get_type(v2));
+        EXPECT_EQ(i, lept_get_array_size(lept_get_array_element(&v, i)));
+        for (int j = 0; j < i; j++) {
+            // std::cout << "[i] = " << i << ", [j] = " << j << std::endl;
+            
+            EXPECT_EQ(LEPT_NUMBER, lept_get_type(lept_get_array_element(v2, j)));
+            EXPECT_EQ(j, lept_get_array_element(v2, j)->u.n);
+        }
+    }
 }
