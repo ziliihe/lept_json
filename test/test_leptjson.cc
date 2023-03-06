@@ -255,19 +255,19 @@ TEST(leptjson, object) {
     ));
     EXPECT_EQ(LEPT_OBJECT, lept_get_type(&v));
     EXPECT_EQ(7, lept_get_object_size(&v));
-    EXPECT_STREQ("n", lept_get_object_key(&v, 0), lept_get_object_key_length(&v, 0));
-    EXPECT_EQ(LEPT_NULL,   lept_get_type(lept_get_object_value(&v, 0)));
-    EXPECT_STREQ("f", lept_get_object_key(&v, 1), lept_get_object_key_length(&v, 1));
+    EXPECT_STREQ("n", lept_get_object_key(&v, 0));
+    EXPECT_EQ(LEPT_NULL, lept_get_type(lept_get_object_value(&v, 0)));
+    EXPECT_STREQ("f", lept_get_object_key(&v, 1));
     EXPECT_EQ(LEPT_FALSE,  lept_get_type(lept_get_object_value(&v, 1)));
-    EXPECT_STREQ("t", lept_get_object_key(&v, 2), lept_get_object_key_length(&v, 2));
+    EXPECT_STREQ("t", lept_get_object_key(&v, 2));
     EXPECT_EQ(LEPT_TRUE,   lept_get_type(lept_get_object_value(&v, 2)));
-    EXPECT_STREQ("i", lept_get_object_key(&v, 3), lept_get_object_key_length(&v, 3));
+    EXPECT_STREQ("i", lept_get_object_key(&v, 3));
     EXPECT_EQ(LEPT_NUMBER, lept_get_type(lept_get_object_value(&v, 3)));
     EXPECT_DOUBLE_EQ(123.0, lept_get_number(lept_get_object_value(&v, 3)));
-    EXPECT_STREQ("s", lept_get_object_key(&v, 4), lept_get_object_key_length(&v, 4));
+    EXPECT_STREQ("s", lept_get_object_key(&v, 4));
     EXPECT_EQ(LEPT_STRING, lept_get_type(lept_get_object_value(&v, 4)));
-    EXPECT_STREQ("abc", lept_get_string(lept_get_object_value(&v, 4)), lept_get_string_length(lept_get_object_value(&v, 4)));
-    EXPECT_STREQ("a", lept_get_object_key(&v, 5), lept_get_object_key_length(&v, 5));
+    EXPECT_STREQ("abc", lept_get_string(lept_get_object_value(&v, 4)));
+    EXPECT_STREQ("a", lept_get_object_key(&v, 5));
     EXPECT_EQ(LEPT_ARRAY, lept_get_type(lept_get_object_value(&v, 5)));
     EXPECT_EQ(3, lept_get_array_size(lept_get_object_value(&v, 5)));
     for (i = 0; i < 3; i++) {
@@ -275,17 +275,34 @@ TEST(leptjson, object) {
         EXPECT_EQ(LEPT_NUMBER, lept_get_type(e));
         EXPECT_DOUBLE_EQ(i + 1.0, lept_get_number(e));
     }
-    EXPECT_STREQ("o", lept_get_object_key(&v, 6), lept_get_object_key_length(&v, 6));
-    {
-        lept_value* o = lept_get_object_value(&v, 6);
-        EXPECT_EQ(LEPT_OBJECT, lept_get_type(o));
-        for (i = 0; i < 3; i++) {
-            lept_value* ov = lept_get_object_value(o, i);
-            EXPECT_TRUE('1' + i == lept_get_object_key(o, i)[0]);
-            EXPECT_EQ(1, lept_get_object_key_length(o, i));
-            EXPECT_EQ(LEPT_NUMBER, lept_get_type(ov));
-            EXPECT_DOUBLE_EQ(i + 1.0, lept_get_number(ov));
-        }
+    EXPECT_STREQ("o", lept_get_object_key(&v, 6));
+    lept_value* o = lept_get_object_value(&v, 6);
+    EXPECT_EQ(LEPT_OBJECT, lept_get_type(o));
+    for (i = 0; i < 3; i++) {
+        lept_value* ov = lept_get_object_value(o, i);
+        EXPECT_TRUE('1' + i == lept_get_object_key(o, i)[0]);
+        EXPECT_EQ(1, lept_get_object_key_length(o, i));
+        EXPECT_EQ(LEPT_NUMBER, lept_get_type(ov));
+        EXPECT_DOUBLE_EQ(i + 1.0, lept_get_number(ov));
     }
     lept_free(&v);
+}
+
+#define TEST_ROUNDTRIP(json)\
+    do {\
+        lept_value v;\
+        char* json2;\
+        size_t length;\
+        lept_init(&v);\
+        EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&v, json));\
+        EXPECT_EQ(LEPT_STRINGIFY_OK, lept_stringify(&v, &json2, &length));\
+        EXPECT_STREQ(json, json2);\
+        lept_free(&v);\
+        free(json2);\
+    } while(0)
+
+TEST(leptjson, stringify) {
+    TEST_ROUNDTRIP("null");
+    TEST_ROUNDTRIP("false");
+    TEST_ROUNDTRIP("true");
 }
