@@ -502,15 +502,67 @@ lept_get_object_value( const lept_value* v, size_t index ) {
 
 #define PUTS(c, s, len)     memcpy(lept_context_push(c, len), s, len)
 
+static void lept_stringify_string(lept_context* c, const char* s, size_t len) {
+    /* "Hello" -> "\"Hello\"" */
+    size_t i;
+    assert( s != NULL);
+    PUTC(c, '"'); /* start */
+    for (i = 0; i < len; ++i) {
+        unsigned char ch = (unsigned char) s[i];
+
+        switch (ch) {
+            case '\"': memcpy(lept_context_push(c, 2), "\\\"", 2); break;
+            case '\\': memcpy(lept_context_push(c, 2), "\\\\", 2); break;
+            case '\b': memcpy(lept_context_push(c, 2), "\\b", 2); break;
+            case '\f': memcpy(lept_context_push(c, 2), "\\f", 2); break;
+            case '\n': memcpy(lept_context_push(c, 2), "\\n", 2); break;
+            case '\r': memcpy(lept_context_push(c, 2), "\\r", 2); break;
+            case '\t': memcpy(lept_context_push(c, 2), "\\t", 2); break;
+            default:
+                if (ch < 0x20)  { /* control character */
+                    char buffer[7];
+                    sprintf_s(buffer, sizeof(buffer), "\\u%04X", ch);
+                    memcpy(lept_context_push(c, 6), buffer, 6);
+                } else {
+                    *(char*)lept_context_push(c, sizeof(char)) = s[i];
+                }
+        }
+    }
+    *(char*)lept_context_push(c,sizeof(char)) = '"';
+}
+
 static int lept_stringify_value(lept_context* c, const lept_value* v) {
-    int ret;
+    size_t i;
     switch (v->type) {
         case LEPT_NULL:   PUTS(c, "null",  4); break;
         case LEPT_FALSE:  PUTS(c, "false", 5); break;
         case LEPT_TRUE:   PUTS(c, "true",  4); break;
-        case LEPT_NUMBER:
-            c->top -= 32 - sprintf_s(lept_context_push(c, 32), 32, "%.17g", v->u.n);
+        case LEPT_NUMBER: c->top -= 32 - sprintf_s(lept_context_push(c, 32), 32, "%.17g", v->u.n); break;
+        case LEPT_STRING: lept_stringify_string(c, v->u.s.s, v->u.s.len); break;
+        case LEPT_ARRAY:
+            *(char*)lept_context_push(c, sizeof(char)) = '[';
+            for (i = 0; i < v->u.a.size; ++i) {
+                lept_stringify_value(c, &v->u.a.e[i]);
+                if ( i + 1 == v->u.a.size )
+                    continue;
+                *(char*)lept_context_push(c, sizeof(char)) = ',';
+            }
+            *(char*)lept_context_push(c, sizeof(char)) = ']';
             break;
+        case LEPT_OBJECT:
+            *(char*)lept_context_push(c, sizeof(char)) = '{';
+            for ( i = 0; i < v->u.o.size; ++i ) {
+                lept_member* curr_mem = &v->u.o.m[i];
+                PUTC(c, '"');
+                PUTS(c, curr_mem->k,curr_mem->klen);
+                PUTC(c, '"');
+                *(char*)lept_context_push(c, sizeof(char)) = ':';
+                lept_stringify_value(c, &curr_mem->v);
+                if ( i + 1 == v->u.o.size)
+                    continue;
+                *(char*)lept_context_push(c, sizeof(char)) = ',';
+            }
+            *(char*)lept_context_push(c, sizeof(char)) = '}';
     }
     return LEPT_STRINGIFY_OK;
 }
