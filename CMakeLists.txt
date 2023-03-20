@@ -38,6 +38,23 @@ target_link_libraries(
     leptjson
 )
 
+add_executable(
+  test_main
+  test/test_main.c
+)
+
+target_link_libraries(
+    test_main
+    leptjson
+)
+target_link_libraries(
+    test_addtion
+    leptjson
+)
+
+
+include(GoogleTest)
+gtest_discover_tests(test_leptjson)
 
 include(GoogleTest)
 gtest_discover_tests(test_leptjson)

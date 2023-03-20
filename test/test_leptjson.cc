@@ -356,6 +356,8 @@ static void test_object_stringify() {
     TEST_ROUNDTRIP("{\"a\":3,\"b\":[1,2,3]}");
     TEST_ROUNDTRIP("{\"a\":3,\"b\":[1,2,3],\"c\":\"\"}");
     TEST_ROUNDTRIP("{\"d\":3.25,\"a\":3,\"b\":[1,2,3],\"c\":\"\"}");
+    TEST_ROUNDTRIP("{\"name\":\"zhang hui hui\",\"gender\":\"girl\"}");
+    TEST_ROUNDTRIP("{\"name\":\"Milo\",\"gender\":\"M\"}");
 }
 
 TEST(leptjson, stringify) {
@@ -368,3 +370,100 @@ TEST(leptjson, stringify) {
     test_string_stringify();
     test_object_stringify();
 }
+
+TEST(leptjson, find) {
+    lept_value o;
+    lept_init(&o);
+    lept_parse(&o, "{\"name\": \"zhang xiao hui\", \"gender\": \"girl\"}");
+    EXPECT_EQ(0, lept_find_object_index(&o, "name", 4));
+    EXPECT_EQ(1, lept_find_object_index(&o, "gender", 6));
+    EXPECT_EQ(NULL, lept_find_object_value(&o, "sgender", 6));
+    lept_value* a = lept_find_object_value(&o, "name", 4);
+    EXPECT_EQ(0, memcmp( lept_get_string( a ), "zhang xiao hui", 14));
+}
+
+
+static void test_string_equal() {
+    lept_value o1, o2;
+    lept_init(&o1);
+    lept_init(&o2);
+    lept_set_string(&o1, "hui", 3);
+    lept_set_string(&o2, "hui", 3);
+    EXPECT_EQ(1, lept_is_equal(&o1, &o2));
+    lept_set_string(&o2, "xiaohui", 3);
+    EXPECT_EQ(0, lept_is_equal(&o1, &o2));
+
+    lept_free(&o1);
+    lept_free(&o2);
+}
+
+static void test_number_equal() {
+    lept_value o1, o2;
+    lept_init(&o1);
+    lept_init(&o2);
+
+    lept_set_number(&o1, 2.2);
+    lept_set_number(&o2, 2.2);
+    EXPECT_EQ(1, lept_is_equal(&o1, &o2));
+    lept_set_number(&o1, 3.2);
+    EXPECT_EQ(0, lept_is_equal(&o1, &o2));
+
+    lept_free(&o1);
+    lept_free(&o2);
+}
+
+static void test_bool_null_equal() {
+    lept_value o1, o2;
+    lept_init(&o1);
+    lept_init(&o2);
+    lept_set_boolean(&o1, 0);
+    lept_set_boolean(&o2, 0);
+    EXPECT_EQ(1, lept_is_equal(&o1, &o2));
+    lept_set_boolean(&o1, 333);
+    EXPECT_EQ(0, lept_is_equal(&o1, &o2));
+    lept_set_null(&o1);
+    lept_set_null(&o2);
+    EXPECT_EQ(1, lept_is_equal(&o1, &o2));
+
+    lept_free(&o1);
+    lept_free(&o2);
+}
+
+static void test_array_equal() {
+    lept_value o1, o2;
+    lept_init(&o1);
+    lept_init(&o2);
+
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&o1, "[1,3,\"zhanghui\"]"));
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&o2, "[1,3,\"zhanghui\"]"));
+    EXPECT_EQ(1, lept_is_equal(&o1, &o2));
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&o2, "[1,4,\"zhanghui\"]"));
+    EXPECT_EQ(0, lept_is_equal(&o1, &o2));
+
+    lept_free(&o1);
+    lept_free(&o2);
+}
+
+static void test_object_equal() {
+    lept_value o1, o2;
+    lept_init(&o1);
+    lept_init(&o2);
+
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&o1, "{\"name\": \"zhang xiao hui\", \"gender\": \"girl\"}"));
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&o2, "{\"name\": \"zhang xiao hui\", \"gender\": \"girl\"}"));
+    EXPECT_EQ(1, lept_is_equal(&o1, &o2));
+    EXPECT_EQ(LEPT_PARSE_OK, lept_parse(&o2, "{\"gender\": \"girl\",\"name\": \"zhang xiao hui\"}"));
+    EXPECT_EQ(1, lept_is_equal(&o1, &o2));
+
+    lept_free(&o1);
+    lept_free(&o2);
+}
+
+TEST(leptjson, equal) {
+    test_string_equal();
+    test_bool_null_equal();
+    test_number_equal();
+    test_array_equal();
+    test_object_equal();
+}
+

@@ -44,6 +44,7 @@ enum {
     LEPT_STRINGIFY_OK
 };
 
+#define LEPT_KEY_NOT_EXIST ((size_t)-1)
 /*
  *
  * json object is a tree
@@ -106,7 +107,15 @@ lept_value* lept_get_object_value(const lept_value* v, size_t index);
 
 
 int lept_stringify(const lept_value* v, char** json, size_t* length);
-// char* lept_stringify(const lept_value* v, size_t* length);
+
+size_t lept_find_object_index( const lept_value* v, const char* key, size_t klen);
+lept_value* lept_find_object_value( const lept_value* v, const char* key, size_t klen);
+int lept_is_equal(const lept_value* lhs, const lept_value* rhs);
+
+lept_value* lept_set_object_value(lept_value* v, const char* key, size_t klen);
+void lept_copy(lept_value* dst, const lept_value* src);
+void lept_swap(lept_value* lhs, lept_value* rhs);
+void lept_move(lept_value* dst, lept_value* src);
 
 #ifdef __cplusplus
 }
