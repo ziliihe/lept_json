@@ -5,7 +5,6 @@ cmake -Bbuild -H.
 cmake --build build
 ```
 
-### 01
 `json`中有 6 种数据类型:
 - null
 - 布尔值: true | false
@@ -54,12 +53,10 @@ int lept_parse(lept_value* v, const char* json) {
 if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's' || c->json[3] != 'e')
 ```
 
-## 02
 ![number](img/v2-de5a6e279cbac2071284bfa7bb1e5730_b.png)
 
 在 C 语言中，数组长度、索引值最好使用 size_t 类型，而不是 int 或 unsigned。
 
-## 03 
 字符串一般表示为空结尾字符串（null-terminated string），json 字符串是允许含有空字符的，例如这个 json `Hello\u0000World`就是单个字符串。
 
 [动态数组增长因子确定](https://github.com/facebook/folly/blob/main/folly/docs/FBVector.md)
@@ -73,14 +70,6 @@ codepoint = 0x10000 + (H − 0xD800) × 0x400 + (L − 0xDC00)
 ![utf-8 编码](img/v2-87bc95aabb1678caec0637a17d13593b_b.png)
 
 
-## 04 
 C 语言的数组大小应该使用 size_t 类型。
 
-如果使用会扩容的对象返回的指针，是会有丢失的风险的。
-
-在使用 C++ 容器时，也会遇到类似的问题。从容器中取得的迭代器（iterator）后，如果改动容器内容，之前的迭代器会失效。
-
-我们编程时都要考虑清楚变量的生命周期，特别是指针的生命周期。
-
-## 05
-![O](img/v2-d21b818cfeaa1932d89e049836c47ebb_b.png)
+[ieee-double 十进制-二进制，二进制-十进制转换](https://github.com/google/double-conversion)
