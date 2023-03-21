@@ -107,6 +107,9 @@ void lept_popback_array_element( lept_value* v );
 lept_value* lept_insert_array_element(lept_value* v, size_t index);
 void lept_erase_array_element(lept_value* v, size_t index, size_t count);
 void lept_clear_array(lept_value* v);
+void lept_shrink_array(lept_value* v);
+lept_value* lept_set_object_value(lept_value* v, const char* key, size_t klen);
+void lept_remove_object_value(lept_value* v, size_t index);
 
 /* object */
 size_t lept_get_object_size(const lept_value* v);
@@ -119,6 +122,7 @@ void lept_set_object(lept_value* v, size_t capacity);
 size_t lept_get_object_capacity( const lept_value* v);
 void lept_reserve_object( lept_value* v, size_t capacity );
 void lept_shrink_object(lept_value* v);
+void lept_clear_object(lept_value* v);
 
 
 int lept_is_equal(const lept_value* lhs, const lept_value* rhs);

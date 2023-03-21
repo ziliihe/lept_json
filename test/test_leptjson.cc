@@ -526,10 +526,12 @@ TEST(leptjson, array_access) {
     /* 0 1 2 3 4 5 6 7 */
     lept_erase_array_element( &a, 2, 2);
     EXPECT_EQ( 6, lept_get_array_size( &a ));
+    EXPECT_EQ( 10, lept_get_array_capacity( &a ));
     /* 0 1 4 5 6 7 */
     lept_erase_array_element( &a , 3, 1 );
     /* 0 1 4 6 7 */
     EXPECT_EQ( 5, lept_get_array_size( &a ));
+    EXPECT_EQ( 10, lept_get_array_capacity( &a ));
     /* index = 0 --> value = 1 */
     EXPECT_DOUBLE_EQ( static_cast<double>(1), lept_get_number( lept_get_array_element( &a, 0 )));
     /* index = 1 --> value = 3 */
@@ -541,9 +543,13 @@ TEST(leptjson, array_access) {
     /* index = 4 --> value = 1218.1314 */
     EXPECT_DOUBLE_EQ( 1218.1314, lept_get_number( lept_get_array_element( &a, 4 )));
 
+    lept_shrink_array( &a );
+    EXPECT_EQ( 5, lept_get_array_capacity( &a ));
+
     /* clear */
     lept_clear_array( &a );
     EXPECT_EQ( 0, lept_get_array_size( &a ));
+
 }
 
 
@@ -553,4 +559,79 @@ TEST(leptjson, object_access) {
 
     lept_set_object( &a, 10 );
     EXPECT_EQ(10, lept_get_object_capacity( &a ));
+
+    lept_reserve_object( &a, 5 );
+    EXPECT_EQ( 10, lept_get_object_capacity( &a ));
+
+    lept_reserve_object( &a, 15 );
+    EXPECT_EQ( 15, lept_get_object_capacity( &a ));
+
+    lept_value o, v, *pv;
+    size_t i, j, index;
+
+    lept_init(&o);
+
+    for (j = 0; j <= 5; j += 5) {
+        lept_set_object(&o, j);
+        EXPECT_EQ(0, lept_get_object_size(&o));
+        EXPECT_EQ(j, lept_get_object_capacity(&o));
+        for (i = 0; i < 10; i++) {
+            char key[2] = "a";
+            key[0] += i;
+            lept_init(&v);
+            lept_set_number(&v, i);
+            lept_move(lept_set_object_value(&o, key, 1), &v);
+            lept_free(&v);
+        }
+        EXPECT_EQ(10, lept_get_object_size(&o));
+        for (i = 0; i < 10; i++) {
+            char key[] = "a";
+            key[0] += i;
+            index = lept_find_object_index(&o, key, 1);
+            EXPECT_TRUE(index != LEPT_KEY_NOT_EXIST);
+            pv = lept_get_object_value(&o, index);
+            EXPECT_DOUBLE_EQ((double)i, lept_get_number(pv));
+        }
+    }
+
+    index = lept_find_object_index(&o, "j", 1);    
+    EXPECT_TRUE(index != LEPT_KEY_NOT_EXIST);
+    lept_remove_object_value(&o, index);
+    index = lept_find_object_index(&o, "j", 1);
+    EXPECT_TRUE(index == LEPT_KEY_NOT_EXIST);
+    EXPECT_EQ(9, lept_get_object_size(&o));
+
+    index = lept_find_object_index(&o, "a", 1);
+    EXPECT_TRUE(index != LEPT_KEY_NOT_EXIST);
+    lept_remove_object_value(&o, index);
+    index = lept_find_object_index(&o, "a", 1);
+    EXPECT_TRUE(index == LEPT_KEY_NOT_EXIST);
+    EXPECT_EQ(8, lept_get_object_size(&o));
+
+    EXPECT_TRUE(lept_get_object_capacity(&o) > 8);
+    lept_shrink_object(&o);
+    EXPECT_EQ(8, lept_get_object_capacity(&o));
+    EXPECT_EQ(8, lept_get_object_size(&o));
+    for (i = 0; i < 8; i++) {
+        char key[] = "a";
+        key[0] += i + 1;
+        EXPECT_DOUBLE_EQ((double)i + 1, lept_get_number(lept_get_object_value(&o, lept_find_object_index(&o, key, 1))));
+    }
+
+    lept_set_string(&v, "Hello", 5);
+    lept_move(lept_set_object_value(&o, "World", 5), &v); /* Test if element is freed */
+    lept_free(&v);
+
+    pv = lept_find_object_value(&o, "World", 5);
+    EXPECT_TRUE(pv != NULL);
+    EXPECT_STREQ("Hello", lept_get_string(pv), lept_get_string_length(pv));
+
+    i = lept_get_object_capacity(&o);
+    lept_clear_object(&o);
+    EXPECT_EQ(0, lept_get_object_size(&o));
+    EXPECT_EQ(i, lept_get_object_capacity(&o)); /* capacity remains unchanged */
+    lept_shrink_object(&o);
+    EXPECT_EQ(0, lept_get_object_capacity(&o));
+
+    lept_free(&o);
 }
