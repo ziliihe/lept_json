@@ -467,3 +467,90 @@ TEST(leptjson, equal) {
     test_object_equal();
 }
 
+
+TEST(leptjson, array_access) {
+    lept_value a, e;
+    size_t i, j;
+
+    lept_init(&a);
+    /* push back */
+    for (j = 0; j <= 5; j += 5) {
+        lept_set_array(&a ,j);
+        EXPECT_EQ(0, lept_get_array_size( &a ));
+        EXPECT_EQ(j, lept_get_array_capacity( &a ));
+
+        for ( i = 0; i < 10; i++) {
+            lept_init(&e);
+            lept_set_number( &e, static_cast<double>(i * 2 + 1));
+            lept_move(lept_pushback_array_element( &a ), &e );
+            lept_free( &e );
+        }
+
+        EXPECT_EQ(10, lept_get_array_size( &a ));
+        for ( i = 0; i < 10; ++i ) {
+            EXPECT_DOUBLE_EQ( static_cast<double>(i * 2 + 1), lept_get_number(lept_get_array_element( &a, i )));
+        }
+    }
+
+    /* pop back */
+    lept_popback_array_element( &a );
+    EXPECT_EQ(9, lept_get_array_size( &a ));
+
+    for ( i = 0; i < 9; ++i ) {
+        EXPECT_DOUBLE_EQ( static_cast<double>(i * 2 + 1), lept_get_number( lept_get_array_element( &a, i )));
+    }
+
+    /* insert */
+    lept_init( &e );
+    lept_set_number( &e, 1218.1314 );
+    lept_move( lept_insert_array_element( &a, 7 ), &e );
+    lept_free( &e );
+    EXPECT_DOUBLE_EQ( 1218.1314, lept_get_number( lept_get_array_element( &a,7 )) );
+    EXPECT_EQ(10, lept_get_array_size( &a ));
+
+    /* erase */
+    for ( i = 0; i < 10; ++i ) {
+        if ( i < 7 ) {
+            EXPECT_DOUBLE_EQ( static_cast<double>( i * 2 + 1), lept_get_number( lept_get_array_element( &a, i )) );
+        }
+        else if (i == 7 ) {
+            EXPECT_DOUBLE_EQ( 1218.1314, lept_get_number( lept_get_array_element( &a, i )) );
+        } else {
+            EXPECT_DOUBLE_EQ( static_cast<double>( (i - 1) * 2 + 1), lept_get_number( lept_get_array_element( &a, i )) );
+        }
+    }
+
+    /* 0 1 2 3 4 5 6 7 8 9 */
+    lept_erase_array_element( &a, 8, 4 );
+    EXPECT_EQ( 8, lept_get_array_size( &a ));
+    /* 0 1 2 3 4 5 6 7 */
+    lept_erase_array_element( &a, 2, 2);
+    EXPECT_EQ( 6, lept_get_array_size( &a ));
+    /* 0 1 4 5 6 7 */
+    lept_erase_array_element( &a , 3, 1 );
+    /* 0 1 4 6 7 */
+    EXPECT_EQ( 5, lept_get_array_size( &a ));
+    /* index = 0 --> value = 1 */
+    EXPECT_DOUBLE_EQ( static_cast<double>(1), lept_get_number( lept_get_array_element( &a, 0 )));
+    /* index = 1 --> value = 3 */
+    EXPECT_DOUBLE_EQ( static_cast<double>(3), lept_get_number( lept_get_array_element( &a, 1 )));
+    /* index = 2 --> value = 4 * 2 + 1 */
+    EXPECT_DOUBLE_EQ( static_cast<double>(9), lept_get_number( lept_get_array_element( &a, 2 )));
+    /* index = 3 --> value = 6 * 2 + 1 */
+    EXPECT_DOUBLE_EQ( static_cast<double>(13), lept_get_number( lept_get_array_element( &a, 3 )));
+    /* index = 4 --> value = 1218.1314 */
+    EXPECT_DOUBLE_EQ( 1218.1314, lept_get_number( lept_get_array_element( &a, 4 )));
+
+    /* clear */
+    lept_clear_array( &a );
+    EXPECT_EQ( 0, lept_get_array_size( &a ));
+}
+
+
+TEST(leptjson, object_access) {
+    lept_value a;
+    lept_init(&a);
+
+    lept_set_object( &a, 10 );
+    EXPECT_EQ(10, lept_get_object_capacity( &a ));
+}
