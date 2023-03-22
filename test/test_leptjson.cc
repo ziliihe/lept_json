@@ -575,18 +575,21 @@ TEST(leptjson, object_access) {
         lept_set_object(&o, j);
         EXPECT_EQ(0, lept_get_object_size(&o));
         EXPECT_EQ(j, lept_get_object_capacity(&o));
+
+        /* add key-value */
         for (i = 0; i < 10; i++) {
             char key[2] = "a";
-            key[0] += i;
+            key[0] += (char)i;
             lept_init(&v);
-            lept_set_number(&v, i);
+            lept_set_number(&v, (double)i);
             lept_move(lept_set_object_value(&o, key, 1), &v);
             lept_free(&v);
         }
         EXPECT_EQ(10, lept_get_object_size(&o));
+
         for (i = 0; i < 10; i++) {
             char key[] = "a";
-            key[0] += i;
+            key[0] += (char)i;
             index = lept_find_object_index(&o, key, 1);
             EXPECT_TRUE(index != LEPT_KEY_NOT_EXIST);
             pv = lept_get_object_value(&o, index);
@@ -608,28 +611,32 @@ TEST(leptjson, object_access) {
     EXPECT_TRUE(index == LEPT_KEY_NOT_EXIST);
     EXPECT_EQ(8, lept_get_object_size(&o));
 
+    /* shrink */
     EXPECT_TRUE(lept_get_object_capacity(&o) > 8);
     lept_shrink_object(&o);
     EXPECT_EQ(8, lept_get_object_capacity(&o));
     EXPECT_EQ(8, lept_get_object_size(&o));
+
     for (i = 0; i < 8; i++) {
         char key[] = "a";
-        key[0] += i + 1;
+        key[0] += (char)(i + 1);
         EXPECT_DOUBLE_EQ((double)i + 1, lept_get_number(lept_get_object_value(&o, lept_find_object_index(&o, key, 1))));
     }
 
+    /* object string member */
     lept_set_string(&v, "Hello", 5);
     lept_move(lept_set_object_value(&o, "World", 5), &v); /* Test if element is freed */
     lept_free(&v);
 
     pv = lept_find_object_value(&o, "World", 5);
     EXPECT_TRUE(pv != NULL);
-    EXPECT_STREQ("Hello", lept_get_string(pv), lept_get_string_length(pv));
+    EXPECT_STREQ("Hello", lept_get_string(pv) );
 
     i = lept_get_object_capacity(&o);
     lept_clear_object(&o);
     EXPECT_EQ(0, lept_get_object_size(&o));
     EXPECT_EQ(i, lept_get_object_capacity(&o)); /* capacity remains unchanged */
+
     lept_shrink_object(&o);
     EXPECT_EQ(0, lept_get_object_capacity(&o));
 

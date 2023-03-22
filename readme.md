@@ -73,3 +73,16 @@ codepoint = 0x10000 + (H − 0xD800) × 0x400 + (L − 0xDC00)
 C 语言的数组大小应该使用 size_t 类型。
 
 [ieee-double 十进制-二进制，二进制-十进制转换](https://github.com/google/double-conversion)
+
+
+总结：
+1. json 共有 null, true, false, 数字, 字符串, 数组, 对象等类型，需要对每种类型分别解析
+2. 需要对空白字符做排除处理，避免解析的时候解析不到正确的字符
+3. 单元测试选择`gtest`，工程管理使用`cmake`，做到了跨平台
+4. 数字的解析有些复杂，主要需要安装流程图考虑各种情况
+5. 字符串、数组和对象的解析就是需要考虑内存的管理
+6. 最后考虑json的一些访问的问题，和使用接口的构建
+7. lept_copy， lept_move, lept_swap, lept_free, lept_context_push, lept_context_pop这些函数涉及内存管理，还没有完全弄懂，需要回顾
+8. 针对数据设计良好的数据结构的重要性，lept_value 作为json的值对象， lept_member 作为对象的成员，函数间通过 lept_context 来相互传递数据
+9. 通过宏的定义来减少函数的复杂性，但不要过度的使用宏适得其反
+10. 通过断言来使程序遇到错误及时终止

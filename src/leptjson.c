@@ -657,6 +657,10 @@ void lept_copy(lept_value* dst, const lept_value* src) {
             }
             break;
         case LEPT_OBJECT:
+            lept_set_object( dst, src->u.o.size );
+            for ( i = 0; i < src->u.o.size; ++i ) {
+                lept_copy( lept_set_object_value( &src->u.o.m[i].v, src->u.o.m[i].k, src->u.o.m[i].klen ), &src->u.o.m[i].v );
+            }
             break;
         default:
             lept_free(dst);
@@ -808,7 +812,7 @@ void lept_shrink_object(lept_value* v) {
         }
     }
 
-    if ( v->u.o.capacity > v->u.o.capacity ) {
+    if ( v->u.o.capacity > v->u.o.size ) {
         v->u.o.capacity = v->u.o.size;
         v->u.o.m = (lept_member*) realloc( v->u.o.m, sizeof( lept_member ) * v->u.o.capacity );
     }
@@ -829,22 +833,40 @@ lept_set_object_value(lept_value* v, const char* key, size_t klen) {
     if ( index != LEPT_KEY_NOT_EXIST ) {
         return &v->u.o.m[index].v;
     }
+
     lept_reserve_object( v, v->u.o.size + 1 );
-    memcpy(v->u.o.m[v->u.o.size].k, key, klen);
-    v->u.o.m[v->u.o.size].klen = klen;
-    lept_init(&v->u.o.m[v->u.o.size].v);
-    return &v->u.o.m[v->u.o.size++].v;
+
+    lept_member* m = &v->u.o.m[v->u.o.size];
+    m->k = memcpy((char*) malloc( sizeof(char) * klen ), key, klen);
+    m->klen = klen;
+    v->u.o.size++;
+
+    return &m->v;
 }
 
 void lept_remove_object_value(lept_value* v, size_t index) {
-    assert( v != NULL && v->type == LEPT_OBJECT && v->u.o.size > 0 &&
-            index >= 0 && index < v->u.o.size );
-    lept_member* m = &v->u.o.m[index];
-    free( m->k );
-    lept_free( &m->v );
+    assert( v != NULL && v->type == LEPT_OBJECT );
+    if ( v->u.o.size == 0 || index < 0 || index >= v->u.o.size ) {
+        return;
+    }
 
-    memcpy( &v->u.o.m[index], &v->u.o.m[v->u.o.size - 1], sizeof(lept_member));
-    m = &v->u.o.m[v->u.o.size - 1];
-    free( m->k );
-    lept_free( &m->v );
+    lept_member* m = &v->u.o.m[index];
+    if ( m == NULL || m->k == NULL ) {
+        return;
+    }
+    if ( index != v->u.o.size - 1 ) {
+        free( m->k );
+        m->k = (char*)malloc( sizeof(char) * v->u.o.m[v->u.o.size - 1].klen );
+        memcpy( m->k, v->u.o.m[v->u.o.size - 1].k, v->u.o.m[v->u.o.size-1].klen );
+        free( v->u.o.m[v->u.o.size - 1].k );
+
+        lept_swap(&m->v, &v->u.o.m[v->u.o.size - 1].v );
+        lept_free( &v->u.o.m[v->u.o.size - 1].v );
+        v->u.o.size--;
+    } else {
+        v->u.o.size--;
+        m = &v->u.o.m[v->u.o.size];
+        free( m->k );
+        lept_free( &m->v );
+    }
 }
